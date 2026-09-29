@@ -51,5 +51,10 @@ app.include_router(notifications.router)
 
 @app.get("/")
 def root() -> dict:
-    return {"response": "MediMate API. See docs at /docs or /redoc"}
+    return {"response": "MediMate API.\nSee docs at /docs or /redoc"}
 
+
+@app.get("/health", tags=["meta"])
+def health() -> dict:
+    """Liveness probe."""
+    return {"status": "ok"}
