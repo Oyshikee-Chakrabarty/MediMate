@@ -1,17 +1,18 @@
 # Medimate
 
-Medimate is a cross-platform application with a Flutter frontend and a Python backend.
+MediMate is a cross-platform medication reminder and management application built entirely with Python. It provides a user-friendly interface for patients and caregivers to manage medicines, medication schedules, dose events, and related notifications.
 
 ## Project Structure
-- `app/`: Flutter mobile application.
-- `backend/`: Python API server (FastAPI).
+-frontend/: Flet-based frontend application written in Python.
+-backend/: FastAPI-based Python API server.
+-README.md: Project documentation.
 
 ## Getting Started
 
 ### Prerequisites
-- Flutter SDK
 - Python 3.x
 - pip
+- Git
 
 ### Setup
 1. **Frontend (`app/`):**
