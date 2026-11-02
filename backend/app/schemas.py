@@ -46,6 +46,8 @@ class MedicationCreate(BaseModel):
     notes: Optional[str] = None
     stock_qty: int = Field(default=0, ge=0)
     restock_notify_days: int = Field(default=7, ge=0, le=90)
+    schedule_times: Optional[List[str]] = None
+    schedule_days: Optional[str] = "daily"
 
 
 class MedicationUpdate(BaseModel):

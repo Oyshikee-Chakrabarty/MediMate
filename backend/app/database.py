@@ -1,4 +1,7 @@
 """Database engine and session management for the MediMate backend.
+
+Uses DATABASE_URL from the environment (PostgreSQL in production, with a
+SQLite fallback for local development).
 """
 
 import os

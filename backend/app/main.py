@@ -1,5 +1,14 @@
 """MediMate FastAPI application entrypoint."""
 
+import sys
+from pathlib import Path
+
+# Ensure the parent backend directory is in sys.path so 'import app...'
+# resolves properly even when launched as 'uvicorn main:app' from inside 'backend/app'
+_backend_dir = str(Path(__file__).resolve().parent.parent)
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
+
 import asyncio
 import logging
 from contextlib import asynccontextmanager
