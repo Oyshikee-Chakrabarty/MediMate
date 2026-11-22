@@ -1,4 +1,8 @@
 """Delta synchronization router implementing Last-Write-Wins (LWW).
+
+- POST /sync : receive dirty client records, LWW-compare against PostgreSQL
+  by updated_at, apply newer client rows, and return the authoritative
+  server state so the client can reset is_dirty flags.
 """
 
 import logging

@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User
-from app.schemas import Token, UserCreate, UserLogin, UserResponse
-from app.security import create_access_token, hash_password, verify_password
+from app.schemas import LanguageUpdate, Token, UserCreate, UserLogin, UserResponse
+from app.security import create_access_token, get_current_user, hash_password, verify_password
 
 logger = logging.getLogger(__name__)
 
@@ -78,3 +78,28 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)) -> Token:
     except Exception as exc:
         logger.exception("Login failed")
         raise HTTPException(status_code=400, detail=f"Login failed: {exc}")
+
+
+@router.put("/me/language", response_model=UserResponse)
+@router.put("/language", response_model=UserResponse)
+def update_language(
+    lang_in: LanguageUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> UserResponse:
+    """Update preferred language ('en' | 'bn') for the current authenticated user."""
+    try:
+        user: User | None = db.query(User).filter(User.id == current_user.id).first()
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        user.preferred_language = lang_in.language
+        db.commit()
+        db.refresh(user)
+        return UserResponse.model_validate(user)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Update language failed")
+        raise HTTPException(status_code=400, detail=f"Failed to update language: {exc}")
+

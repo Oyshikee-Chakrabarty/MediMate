@@ -1,4 +1,9 @@
 """Schedule router: create dose schedules with 30-day dose event generation.
+
+- POST /schedules : create schedule attached to a medication and
+  auto-generate initial 30-day DoseEvent rows with status 'pending'
+- GET  /schedules : list schedules for a medication or patient
+- DELETE /schedules/{id} : remove a schedule and its dose events
 """
 
 import logging
@@ -33,15 +38,22 @@ def generate_dose_events(
     db: Session, schedule: Schedule, medication: Medication, days: int = DAYS_AHEAD
 ) -> List[DoseEvent]:
     """Generate `days` days of pending DoseEvents for a schedule."""
-    now: datetime = datetime.now(timezone.utc)
+    now: datetime = datetime.now()
     events: List[DoseEvent] = []
     hh, mm, ss = (int(p) for p in schedule.due_time.split(":"))
+
+    existing_ts = set(
+        d[0]
+        for d in db.query(DoseEvent.due_timestamp)
+        .filter(DoseEvent.schedule_id == schedule.id)
+        .all()
+    )
 
     for offset in range(days):
         day: datetime = (now + timedelta(days=offset)).replace(
             hour=hh, minute=mm, second=ss, microsecond=0
         )
-        if not _schedule_runs_today(schedule.days_of_week, day):
+        if day in existing_ts or not _schedule_runs_today(schedule.days_of_week, day):
             continue
         events.append(
             DoseEvent(
@@ -85,6 +97,20 @@ def create_schedule(
             "Schedule %s created for med %s with %d dose events",
             schedule.id, med.id, len(events),
         )
+        try:
+            from app.routers.notifications import broadcast_mutation
+            broadcast_mutation(
+                med.patient_id,
+                "SCHEDULE_CREATED",
+                {
+                    "schedule_id": schedule.id,
+                    "medication_id": med.id,
+                    "due_time": schedule.due_time,
+                    "days_of_week": schedule.days_of_week,
+                },
+            )
+        except Exception:
+            pass
         return ScheduleResponse.model_validate(schedule)
     except HTTPException:
         raise
@@ -145,12 +171,27 @@ def delete_schedule(
         med: Medication | None = (
             db.query(Medication).filter(Medication.id == schedule.medication_id).first()
         )
+        patient_id: Optional[str] = med.patient_id if med is not None else None
         if med is not None:
             _resolve_patient_id(med.patient_id, current_user, db)
 
         db.query(DoseEvent).filter(DoseEvent.schedule_id == schedule_id).delete()
         db.delete(schedule)
         db.commit()
+
+        if patient_id is not None:
+            try:
+                from app.routers.notifications import broadcast_mutation
+                broadcast_mutation(
+                    patient_id,
+                    "SCHEDULE_DELETED",
+                    {
+                        "schedule_id": schedule_id,
+                        "medication_id": med.id if med else None,
+                    },
+                )
+            except Exception:
+                pass
     except HTTPException:
         raise
     except Exception as exc:

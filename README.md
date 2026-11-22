@@ -3,9 +3,9 @@
 MediMate is a cross-platform medication reminder and management application built entirely with Python. It provides a user-friendly interface for patients and caregivers to manage medicines, medication schedules, dose events, and related notifications.
 
 ## Project Structure
--frontend/: Flet-based frontend application written in Python.
--backend/: FastAPI-based Python API server.
--README.md: Project documentation.
+- frontend/: Flet-based frontend application written in Python.
+- backend/: FastAPI-based Python API server.
+- README.md: Project documentation.
 
 ## Getting Started
 

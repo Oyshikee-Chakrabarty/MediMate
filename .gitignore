@@ -1,8 +1,3 @@
-# Flutter
-.dart_tool/
-.packages
-.pub-cache/
-.pub/
 build/
 *.pyc
 *.pyo
@@ -15,3 +10,4 @@ venv/
 .vscode/
 .idea/
 *.iml
+tests/

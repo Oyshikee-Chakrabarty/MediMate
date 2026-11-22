@@ -1,4 +1,8 @@
 """WebSocket escalation router and connection manager.
+
+- WS /ws/caretaker/{caretaker_id} : realtime caretaker alert channel
+- ConnectionManager               : caretaker_id -> active WebSockets
+- broadcast_missed_dose_alert()   : notify all paired caretakers
 """
 
 import asyncio

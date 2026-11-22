@@ -1,4 +1,8 @@
-"""CareLink pairing router: 6-digit invite code .
+"""CareLink pairing router: 6-digit invite code protocol.
+
+- POST /care-links/generate-code : patient generates a pairing code
+- POST /care-links/pair          : caretaker submits the code to link
+- GET  /care-links/my-patients   : caretaker lists actively paired patients
 """
 
 import logging

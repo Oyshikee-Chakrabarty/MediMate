@@ -1,4 +1,9 @@
 """Medication CRUD router.
+
+- POST   /medications      : create medication for a patient
+- GET    /medications      : list medications of a patient
+- PUT    /medications/{id} : edit medication / stock
+- DELETE /medications/{id} : remove medication
 """
 
 import logging
@@ -11,7 +16,18 @@ from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.models import CareLink, Medication, User
 from app.routers.notifications import broadcast_mutation
-from app.schemas import MedicationCreate, MedicationResponse, MedicationUpdate
+from app.schemas import (
+    DoseTrackingResponse,
+    MedicationCreate,
+    MedicationResponse,
+    MedicationUpdate,
+    RescheduleRequest,
+)
+from app.services.dose_tracking import (
+    calculate_medication_tracking,
+    check_and_broadcast_reschedule_alert,
+    reschedule_medication as svc_reschedule,
+)
 from app.security import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -78,17 +94,20 @@ def create_medication(
         db.add(med)
         db.flush()
 
-        # Auto-create daily 9:00 AM schedule so dose events are generated for today
+        # Create schedule(s) and generate dose events for today and future days
         from app.models import Schedule
         from app.routers.schedules import generate_dose_events
-        schedule = Schedule(
-            medication_id=med.id,
-            due_time="09:00:00",
-            days_of_week="daily",
-        )
-        db.add(schedule)
-        db.flush()
-        generate_dose_events(db, schedule, med)
+        schedule_times = body.schedule_times if body.schedule_times else ["09:00:00"]
+        schedule_days = body.schedule_days or "daily"
+        for st in schedule_times:
+            schedule = Schedule(
+                medication_id=med.id,
+                due_time=st,
+                days_of_week=schedule_days,
+            )
+            db.add(schedule)
+            db.flush()
+            generate_dose_events(db, schedule, med)
 
         db.commit()
         db.refresh(med)
@@ -102,6 +121,10 @@ def create_medication(
              "restock_notify_days": med.restock_notify_days,
              "actor": current_user.name, "actor_id": current_user.id},
         )
+        try:
+            check_and_broadcast_reschedule_alert(db, med)
+        except Exception:
+            logger.exception("Initial reschedule alert check failed")
         return MedicationResponse.model_validate(med)
     except HTTPException:
         raise
@@ -135,6 +158,32 @@ def list_medications(
         raise HTTPException(status_code=400, detail=f"Could not list medications: {exc}")
 
 
+@router.get("/tracking/summary", response_model=List[DoseTrackingResponse])
+def get_tracking_summary(
+    patient_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> List[DoseTrackingResponse]:
+    """Get dose tracking and reschedule calculation summary for all medications."""
+    try:
+        pid: str = _resolve_patient_id(patient_id, current_user, db)
+        meds: List[Medication] = (
+            db.query(Medication)
+            .filter(Medication.patient_id == pid)
+            .order_by(Medication.name)
+            .all()
+        )
+        return [
+            DoseTrackingResponse.model_validate(calculate_medication_tracking(db, m))
+            for m in meds
+        ]
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("get_tracking_summary failed")
+        raise HTTPException(status_code=400, detail=f"Could not fetch tracking summary: {exc}")
+
+
 @router.get("/{medication_id}", response_model=MedicationResponse)
 def get_medication(
     medication_id: str,
@@ -155,6 +204,61 @@ def get_medication(
     except Exception as exc:
         logger.exception("get_medication failed")
         raise HTTPException(status_code=400, detail=f"Could not fetch medication: {exc}")
+
+
+@router.get("/{medication_id}/tracking", response_model=DoseTrackingResponse)
+def get_medication_tracking(
+    medication_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DoseTrackingResponse:
+    """Get dose tracking and reschedule calculations for a single medication."""
+    try:
+        med: Medication | None = (
+            db.query(Medication).filter(Medication.id == medication_id).first()
+        )
+        if med is None:
+            raise HTTPException(status_code=404, detail="Medication not found")
+        _resolve_patient_id(med.patient_id, current_user, db)
+        tracking = calculate_medication_tracking(db, med)
+        return DoseTrackingResponse.model_validate(tracking)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("get_medication_tracking failed")
+        raise HTTPException(status_code=400, detail=f"Could not fetch medication tracking: {exc}")
+
+
+@router.post("/{medication_id}/reschedule", response_model=DoseTrackingResponse)
+def reschedule_med(
+    medication_id: str,
+    body: RescheduleRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DoseTrackingResponse:
+    """Restock medication and reschedule pending dose events."""
+    try:
+        med: Medication | None = (
+            db.query(Medication).filter(Medication.id == medication_id).first()
+        )
+        if med is None:
+            raise HTTPException(status_code=404, detail="Medication not found")
+        _resolve_patient_id(body.patient_id or med.patient_id, current_user, db)
+        updated_tracking = svc_reschedule(
+            db=db,
+            medication=med,
+            added_stock=body.added_stock,
+            new_due_times=body.new_due_times,
+            new_days_of_week=body.new_days_of_week,
+            extend_days=body.extend_days,
+        )
+        return DoseTrackingResponse.model_validate(updated_tracking)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        db.rollback()
+        logger.exception("reschedule_med failed")
+        raise HTTPException(status_code=400, detail=f"Could not reschedule medication: {exc}")
 
 
 @router.put("/{medication_id}", response_model=MedicationResponse)
@@ -202,6 +306,10 @@ def update_medication(
              "restock_notify_days": med.restock_notify_days,
              "actor": current_user.name, "actor_id": current_user.id},
         )
+        try:
+            check_and_broadcast_reschedule_alert(db, med)
+        except Exception:
+            logger.exception("Initial reschedule alert check failed")
         return MedicationResponse.model_validate(med)
     except HTTPException:
         raise
