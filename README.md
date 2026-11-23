@@ -20,6 +20,12 @@
 
 ---
 
+## 📘 About 
+
+MediMate is a cross-platform medication reminder and management application built entirely with Python. It provides a user-friendly interface for patients and caregivers to manage medicines, medication schedules, dose events, and related notifications.
+
+---
+
 ## 📌 Overview
 
 This directory contains the self-contained production implementation of **MediMate**:
