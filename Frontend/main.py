@@ -1,37 +1,7 @@
-"""MediMate — Milestone 1 + 2 standalone app, FRONTEND entrypoint (flet 1.0).
-
-This app is split into two halves:
-
-    medimate_standalone/
-    ├── frontend/               # this folder — the Flet UI
-    │   ├── main.py             # entry point: page setup + routing (this file)
-    │   ├── config.py           # colors & sizes shared by all views
-    │   ├── components/common.py    # centered(), safe_update(), toast()
-    │   ├── services/api_client.py  # REST client (JWT, care-links, medications)
-    │   ├── services/event_socket.py# realtime push channel (no polling)
-    │   └── views/              # one file per screen (auth, patient, caretaker)
-    └── backend/                # the FastAPI API it talks to (see ../backend/)
-
-It demonstrates the first two milestones:
-
-  Milestone 1 : register & login (JWT auth)                    -> views/auth_view.py
-  Milestone 2 : 6-digit care-link pairing + medication CRUD    -> views/patient_view.py
-                                                                views/caretaker_view.py
-
-Run it:
-    uv run uvicorn app.main:app --app-dir medimate_standalone/backend --reload  # terminal 1
-    uv run flet run medimate_standalone/frontend/main.py                        # terminal 2
-
-Dashboards refresh in realtime without any polling: the backend pushes
-MEDICATION_* / CARE_LINK_* events over WS /ws/events/{user_id} the moment
-data changes (services/event_socket.py), and the mounted view reloads
-itself. Each signed-in user gets exactly one EventSocket; it is stopped
-on logout and replaced on the next login.
-"""
-
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any, Dict
 
 import flet as ft
@@ -39,13 +9,16 @@ import flet as ft
 from components.common import centered
 from services.api_client import Api
 from services.event_socket import EventSocket
+from views.add_medicine_view import AddMedicineView
 from views.auth_view import AuthView
 from views.caretaker_view import CaretakerView
+from views.medicines_view import MedicinesView
 from views.patient_view import PatientView
+from views.schedule_view import ScheduleView
 
-# Point the app at a different backend (e.g. a phone on your LAN) without
-# editing code:  MEDIMATE_API_URL=http://192.168.1.50:8000 flet run main.py
 API_BASE: str = os.getenv("MEDIMATE_API_URL", "http://127.0.0.1:8000")
+ASSETS_DIR: str = str(Path(__file__).resolve().parent / "assets")
+os.environ.setdefault("FLET_ASSETS_DIR", ASSETS_DIR)
 
 
 def main(page: ft.Page) -> None:
@@ -58,18 +31,20 @@ def main(page: ft.Page) -> None:
     page.spacing = 0
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.bgcolor = "#F4FAFF"
+    page.theme_mode = ft.ThemeMode.LIGHT
 
     api: Api = Api(API_BASE)
-    # The realtime push socket of the currently signed-in user (None on auth).
     current_socket: list[EventSocket | None] = [None]
 
     def show_auth() -> None:
         """Render the login/register screen."""
+        from services.alarm_service import AlarmRinger
+        AlarmRinger.stop_all()
         if current_socket[0] is not None:
             current_socket[0].stop()  # logout: drop the event channel
             current_socket[0] = None
         page.clean()
-        page.add(centered([AuthView(page, api, on_logged_in=show_home)]))
+        page.add(centered([AuthView(page, api, on_logged_in=show_home)], scroll=True))
 
     def show_home(role: str, user: Dict[str, Any]) -> None:
         """Route to the dashboard matching the signed-in user's role."""
@@ -97,11 +72,11 @@ def main(page: ft.Page) -> None:
         socket.start()
         current_socket[0] = socket
 
-        page.add(centered([view]))
+        page.add(centered([view], scroll=False))
 
     show_auth()
 
 
 # flet 1.0: ft.app(target=...) is gone — ft.run() starts the app.
 if __name__ == "__main__":
-    ft.run(main)
+    ft.run(main, assets_dir=ASSETS_DIR)
