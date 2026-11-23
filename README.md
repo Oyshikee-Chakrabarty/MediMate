@@ -26,6 +26,48 @@ MediMate is a cross-platform medication reminder and management application buil
 
 ---
 
+## 👥 Development Team
+
+<table>
+  <tr>
+    <td align="center" width="33.33%">
+      <a href="https://github.com/Shadow-ranger01">
+        <img src="https://github.com/Shadow-ranger01.png?size=120" width="100" style="border-radius: 50%;" alt="Shadow-ranger01" />
+        <br />
+        <sub><b>Shadow-ranger01</b></sub>
+      </a>
+      <br />
+      <a href="https://github.com/Shadow-ranger01">
+        <img src="https://img.shields.io/badge/GitHub-Profile-181717?style=flat&logo=github" alt="GitHub" />
+      </a>
+    </td>
+    <td align="center" width="33.33%">
+      <a href="https://github.com/Oyshikee-Chakrabarty">
+        <img src="https://github.com/Oyshikee-Chakrabarty.png?size=120" width="100" style="border-radius: 50%;" alt="Oyshikee Chakrabarty" />
+        <br />
+        <sub><b>Oyshikee Chakrabarty</b></sub>
+      </a>
+      <br />
+      <a href="https://github.com/Oyshikee-Chakrabarty">
+        <img src="https://img.shields.io/badge/GitHub-Profile-181717?style=flat&logo=github" alt="GitHub" />
+      </a>
+    </td>
+    <td align="center" width="33.33%">
+      <a href="https://github.com/dipu-basak">
+        <img src="https://github.com/dipu-basak.png?size=120" width="100" style="border-radius: 50%;" alt="Dipu Basak" />
+        <br />
+        <sub><b>Dipu Basak</b></sub>
+      </a>
+      <br />
+      <a href="https://github.com/dipu-basak">
+        <img src="https://img.shields.io/badge/GitHub-Profile-181717?style=flat&logo=github" alt="GitHub" />
+      </a>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## 📌 Overview
 
 This directory contains the self-contained production implementation of **MediMate**:
