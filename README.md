@@ -1,6 +1,5 @@
 
 <p align="center">
-  <img src="assets/logo.png" alt="MediMate Logo" width="160" />
   <img width="160" height="160" alt="logo" src="https://github.com/user-attachments/assets/80e038ce-da7e-411d-800d-ed7bed5e0f4a" />
 </p>
 
