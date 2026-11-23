@@ -28,6 +28,7 @@ MediMate is a cross-platform medication reminder and management application buil
 
 ## 👥 Development Team
 
+<div align="center">
 <table>
   <tr>
     <td align="center" width="33.33%">
@@ -65,6 +66,7 @@ MediMate is a cross-platform medication reminder and management application buil
     </td>
   </tr>
 </table>
+</div>
 
 ---
 
