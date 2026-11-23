@@ -21,6 +21,7 @@ from app.routers import (
     auth,
     care_links,
     dose_events,
+    insulin,
     medicines,
     notifications,
     schedules,
@@ -55,6 +56,7 @@ app.include_router(care_links.router)
 app.include_router(medicines.router)
 app.include_router(schedules.router)
 app.include_router(dose_events.router)
+app.include_router(insulin.router)
 app.include_router(sync.router)
 app.include_router(notifications.router)
 

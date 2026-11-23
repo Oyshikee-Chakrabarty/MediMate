@@ -1,4 +1,7 @@
-"""SQLAlchemy ORM models for MediMate backend database.
+"""SQLAlchemy ORM models for MediMate backend (PostgreSQL / SQLite).
+
+All primary keys are UUID v4 strings generated in Python to guarantee
+cross-system (SQLite <-> PostgreSQL) sync integrity.
 """
 
 import uuid
@@ -8,6 +11,7 @@ from sqlalchemy import (
     Column,
     String,
     Integer,
+    Float,
     DateTime,
     ForeignKey,
 )
@@ -128,3 +132,21 @@ class DoseEvent(Base):
 
     def __repr__(self) -> str:
         return f"<DoseEvent id={self.id} status={self.status} due={self.due_timestamp}>"
+
+
+class InsulinReading(Base):
+    __tablename__ = "insulin_readings"
+
+    id: str = Column(String(36), primary_key=True, default=_uuid)
+    patient_id: str = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    reading_date: str = Column(String(10), nullable=False, index=True)  # "YYYY-MM-DD"
+    reading_time: str = Column(String(8), nullable=False)               # "HH:MM:SS" (e.g. "09:00:00")
+    sugar_level: float = Column(Float, nullable=False)                  # e.g. 9.0, 14.0
+    insulin_units: float = Column(Float, nullable=True)                 # e.g. 10.0
+    notes: str = Column(String(255), nullable=True)
+    created_at: datetime = Column(DateTime(timezone=True), nullable=False, default=_now)
+
+    patient = relationship("User")
+
+    def __repr__(self) -> str:
+        return f"<InsulinReading id={self.id} date={self.reading_date} time={self.reading_time} sugar={self.sugar_level}>"

@@ -36,6 +36,10 @@ class UserLogin(BaseModel):
     password: str
 
 
+class LanguageUpdate(BaseModel):
+    language: str = Field(pattern="^(en|bn)$")
+
+
 class MedicationCreate(BaseModel):
     patient_id: Optional[str] = None  # caretakers may supply the paired patient's id
     name: str = Field(min_length=1, max_length=160)
@@ -214,3 +218,96 @@ class SyncResult(BaseModel):
 class WebSocketMessage(BaseModel):
     type: str
     payload: Dict[str, Any]
+
+
+class DoseTrackingResponse(BaseModel):
+    medication_id: str
+    medication_name: str
+    patient_id: str
+    patient_name: str
+    dosage: Optional[str] = None
+    form: Optional[str] = "Tablet"
+    disease: Optional[str] = None
+    stock_qty: int
+    restock_notify_days: int
+    doses_per_day: float
+    doses_per_week: float
+    frequency_summary: str
+    days_supply_remaining: float
+    reschedule_due_date: Optional[str] = None
+    reschedule_warning_date: Optional[str] = None
+    reschedule_status: str  # "healthy" | "reschedule_soon" | "reschedule_now"
+    is_reschedule_alert_active: bool
+    total_doses_taken: int
+    total_doses_missed: int
+    total_doses_skipped: int
+    total_doses_scheduled: int
+    adherence_pct: float
+
+
+class RescheduleRequest(BaseModel):
+    added_stock: int = Field(default=30, ge=1)
+    new_due_times: Optional[List[str]] = None
+    new_days_of_week: Optional[str] = None
+    extend_days: int = Field(default=30, ge=1, le=90)
+    patient_id: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Insulin & Medication History schemas
+# ---------------------------------------------------------------------------
+
+
+class InsulinReadingCreate(BaseModel):
+    patient_id: Optional[str] = None
+    reading_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    reading_time: str = Field(pattern=r"^\d{2}:\d{2}(:\d{2})?$")
+    sugar_level: float = Field(gt=0, le=50.0)
+    insulin_units: Optional[float] = Field(default=None, ge=0)
+    notes: Optional[str] = None
+
+
+class InsulinReadingResponse(BaseModel):
+    id: str
+    patient_id: str
+    reading_date: str
+    reading_time: str
+    sugar_level: float
+    insulin_units: Optional[float] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class DoseDetailItem(BaseModel):
+    id: str
+    schedule_id: str
+    medication_id: str
+    medication_name: str
+    dosage: Optional[str] = None
+    form: Optional[str] = "Tablet"
+    disease: Optional[str] = None
+    due_time: str
+    due_timestamp: datetime
+    status: str
+    taken_at: Optional[datetime] = None
+
+
+class DoseHistoryDaySummary(BaseModel):
+    date: str  # "YYYY-MM-DD"
+    day: int   # 1..31
+    has_schedule: bool
+    total_doses: int
+    taken_doses: int
+    missed_doses: int
+    skipped_doses: int
+    pending_doses: int
+    status_color: str  # "blue" | "red" | "hollow" | "green_dot" | "normal"
+
+
+class DoseHistoryResponse(BaseModel):
+    year: int
+    month: int
+    days: List[DoseHistoryDaySummary]
+    today: str
