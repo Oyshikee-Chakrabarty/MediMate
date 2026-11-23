@@ -35,7 +35,7 @@ MediMate is a cross-platform medication reminder and management application buil
       <a href="https://github.com/Shadow-ranger01">
         <img src="https://github.com/Shadow-ranger01.png?size=120" width="100" style="border-radius: 50%;" alt="Shadow-ranger01" />
         <br />
-        <sub><b>Shadow-ranger01</b></sub>
+        <sub><b>Rafi </b></sub>
       </a>
       <br />
       <a href="https://github.com/Shadow-ranger01">
@@ -46,7 +46,7 @@ MediMate is a cross-platform medication reminder and management application buil
       <a href="https://github.com/Oyshikee-Chakrabarty">
         <img src="https://github.com/Oyshikee-Chakrabarty.png?size=120" width="100" style="border-radius: 50%;" alt="Oyshikee Chakrabarty" />
         <br />
-        <sub><b>Oyshikee Chakrabarty</b></sub>
+        <sub><b>Oyshikee </b></sub>
       </a>
       <br />
       <a href="https://github.com/Oyshikee-Chakrabarty">
@@ -57,7 +57,7 @@ MediMate is a cross-platform medication reminder and management application buil
       <a href="https://github.com/dipu-basak">
         <img src="https://github.com/dipu-basak.png?size=120" width="100" style="border-radius: 50%;" alt="Dipu Basak" />
         <br />
-        <sub><b>Dipu Basak</b></sub>
+        <sub><b>Dipu </b></sub>
       </a>
       <br />
       <a href="https://github.com/dipu-basak">
