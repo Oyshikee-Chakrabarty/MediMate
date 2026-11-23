@@ -3,7 +3,7 @@
   <img width="160" height="160" alt="logo" src="https://github.com/user-attachments/assets/80e038ce-da7e-411d-800d-ed7bed5e0f4a" />
 </p>
 
-<h1 align="center">MediMate — Standalone Architecture</h1>
+<h1 align="center">MediMate</h1>
 
 <p align="center">
   <strong>Cross-Platform Medication Adherence & Caregiver Coordination Platform</strong>
